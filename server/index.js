@@ -5,7 +5,6 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 const app = express();
-app.use(express.json());
 
 app.use(
   cors({
@@ -14,7 +13,8 @@ app.use(
     credentials: true,
   })
 );
-
+app.use(express.json());
+let cluster, bucket, collection;
 // ---------------------------
 // 1️⃣ Couchbase Connection
 // ---------------------------
