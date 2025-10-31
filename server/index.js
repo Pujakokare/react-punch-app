@@ -1,6 +1,8 @@
 import express from "express";
 import cors from "cors";
 import couchbase from "couchbase";
+import path from "path";
+import { fileURLToPath } from "url";
 
 const app = express();
 app.use(express.json());
@@ -8,6 +10,9 @@ app.use(cors());
 
 let cluster, bucket, collection;
 
+// ---------------------------
+// 1️⃣ Couchbase Connection
+// ---------------------------
 const connectToCouchbase = async () => {
   try {
     cluster = await couchbase.connect(process.env.COUCHBASE_CONNSTR, {
@@ -25,57 +30,74 @@ const connectToCouchbase = async () => {
   }
 };
 
+// ---------------------------
+// 2️⃣ API Routes
+// ---------------------------
+app.get("/api", (req, res) => {
+  res.send("✅ Punch API running...");
+});
+
+// Save punch
+app.post("/api/punch", async (req, res) => {
+  try {
+    const punch = {
+      time: req.body.time,
+      createdAt: new Date().toISOString(),
+    };
+    const key = `punch_${Date.now()}`;
+    await collection.upsert(key, punch);
+    res.send({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ error: "Failed to save punch" });
+  }
+});
+
+// Fetch punches
+app.get("/api/punches", async (req, res) => {
+  try {
+    const query = `
+      SELECT META().id, time, createdAt
+      FROM \`${process.env.COUCHBASE_BUCKET}\`
+      WHERE META().id LIKE "punch_%"
+      ORDER BY createdAt DESC
+      LIMIT 50;
+    `;
+    const result = await cluster.query(query);
+    const punches = result.rows.map(row => ({
+      id: row.id,
+      time: row.time,
+      createdAt: row.createdAt,
+    }));
+    res.send(punches);
+  } catch (err) {
+    console.error("❌ Query failed:", err);
+    res.status(500).send({ error: "Failed to fetch punches" });
+  }
+});
+
+// ---------------------------
+// 3️⃣ Serve React Frontend
+// ---------------------------
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const clientBuildPath = path.join(__dirname, "../client/build");
+
+app.use(express.static(clientBuildPath));
+
+app.get("*", (req, res) => {
+  res.sendFile(path.join(clientBuildPath, "index.html"));
+});
+
+// ---------------------------
+// 4️⃣ Start Server
+// ---------------------------
 const startServer = async () => {
   await connectToCouchbase();
-
-  app.get("/", (req, res) => {
-    res.send("✅ Punch API running...");
-  });
-
-  // Save punch
-  app.post("/api/punch", async (req, res) => {
-    try {
-      const punch = {
-        time: req.body.time,
-        createdAt: new Date().toISOString(),
-      };
-      const key = `punch_${Date.now()}`;
-      await collection.upsert(key, punch);
-      res.send({ success: true });
-    } catch (err) {
-      console.error(err);
-      res.status(500).send({ error: "Failed to save punch" });
-    }
-  });
-
-  // Fetch punches
-  app.get("/api/punches", async (req, res) => {
-    try {
-      const query = `
-        SELECT META().id, time, createdAt
-        FROM \`${process.env.COUCHBASE_BUCKET}\`
-        WHERE META().id LIKE "punch_%"
-        ORDER BY createdAt DESC
-        LIMIT 50;
-      `;
-      const result = await cluster.query(query);
-      const punches = result.rows.map(row => ({
-        id: row.id,
-        time: row.time,
-        createdAt: row.createdAt,
-      }));
-      res.send(punches);
-    } catch (err) {
-      console.error("❌ Query failed:", err);
-      res.status(500).send({ error: "Failed to fetch punches" });
-    }
-  });
-
   const PORT = process.env.PORT || 3000;
   app.listen(PORT, () => {
     console.log(`🚀 Server started on port ${PORT}`);
   });
 };
 
-// Start everything
 startServer();
