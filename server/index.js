@@ -6,9 +6,14 @@ import { fileURLToPath } from "url";
 
 const app = express();
 app.use(express.json());
-app.use(cors());
 
-let cluster, bucket, collection;
+app.use(
+  cors({
+    origin: ["https://react-punch-app-1-ra32.onrender.com"], // ✅ your frontend URL
+    methods: ["GET", "POST"],
+    credentials: true,
+  })
+);
 
 // ---------------------------
 // 1️⃣ Couchbase Connection
