@@ -23,29 +23,38 @@ const connectToCouchbase = async () => {
 };
 
 app.get("/api/punches", async (req, res) => {
-  try {
-    const result = await cluster.query(
-      `SELECT META().id, time, createdAt FROM \`${process.env.COUCHBASE_BUCKET}\`
-       WHERE META().id LIKE "punch_%" ORDER BY createdAt DESC LIMIT 50`
-    );
-    res.json(result.rows);
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: "Failed to fetch punches" });
-  }
+  res.send([]); // temporary test
 });
 
 app.post("/api/punch", async (req, res) => {
-  try {
-    const punch = { time: req.body.time, createdAt: new Date().toISOString() };
-    const key = `punch_${Date.now()}`;
-    await collection.upsert(key, punch);
-    res.json({ success: true });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: "Failed to save punch" });
-  }
+  res.send({ success: true });
 });
+
+
+// app.get("/api/punches", async (req, res) => {
+//   try {
+//     const result = await cluster.query(
+//       `SELECT META().id, time, createdAt FROM \`${process.env.COUCHBASE_BUCKET}\`
+//        WHERE META().id LIKE "punch_%" ORDER BY createdAt DESC LIMIT 50`
+//     );
+//     res.json(result.rows);
+//   } catch (e) {
+//     console.error(e);
+//     res.status(500).json({ error: "Failed to fetch punches" });
+//   }
+// });
+
+// app.post("/api/punch", async (req, res) => {
+//   try {
+//     const punch = { time: req.body.time, createdAt: new Date().toISOString() };
+//     const key = `punch_${Date.now()}`;
+//     await collection.upsert(key, punch);
+//     res.json({ success: true });
+//   } catch (e) {
+//     console.error(e);
+//     res.status(500).json({ error: "Failed to save punch" });
+//   }
+// });
 
 const PORT = process.env.PORT || 3000;
 connectToCouchbase().then(() =>
