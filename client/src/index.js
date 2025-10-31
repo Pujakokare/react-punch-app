@@ -4,4 +4,9 @@ import App from './App';
 import './App.css';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(<App />);
+
+root.render(
+  <MsalProvider instance={msalInstance}>
+    <App />
+  </MsalProvider>
+);
