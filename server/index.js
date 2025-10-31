@@ -6,7 +6,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-const port = process.env.PORT || 10000;
+
 
 const connectToCouchbase = async () => {
   try {
@@ -51,4 +51,8 @@ app.get("/api/punches", async (req, res) => {
   }
 });
 
-app.listen(port, () => console.log(`🚀 Server running on port ${port}`));
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`🚀 Server started on port ${PORT}`);
+});
+
