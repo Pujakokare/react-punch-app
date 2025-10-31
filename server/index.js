@@ -25,53 +25,57 @@ const connectToCouchbase = async () => {
   }
 };
 
-// connect on startup
-await connectToCouchbase();
+const startServer = async () => {
+  await connectToCouchbase();
 
-app.get("/", (req, res) => {
-  res.send("✅ Punch API running...");
-});
+  app.get("/", (req, res) => {
+    res.send("✅ Punch API running...");
+  });
 
-// save punch
-app.post("/api/punch", async (req, res) => {
-  try {
-    const punch = {
-      time: req.body.time,
-      createdAt: new Date().toISOString(),
-    };
-    const key = `punch_${Date.now()}`;
-    await collection.upsert(key, punch);
-    res.send({ success: true });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send({ error: "Failed to save punch" });
-  }
-});
+  // Save punch
+  app.post("/api/punch", async (req, res) => {
+    try {
+      const punch = {
+        time: req.body.time,
+        createdAt: new Date().toISOString(),
+      };
+      const key = `punch_${Date.now()}`;
+      await collection.upsert(key, punch);
+      res.send({ success: true });
+    } catch (err) {
+      console.error(err);
+      res.status(500).send({ error: "Failed to save punch" });
+    }
+  });
 
-// fetch punches
-app.get("/api/punches", async (req, res) => {
-  try {
-    const query = `
-      SELECT META().id, time, createdAt
-      FROM \`${process.env.COUCHBASE_BUCKET}\`
-      WHERE META().id LIKE "punch_%"
-      ORDER BY createdAt DESC
-      LIMIT 50;
-    `;
-    const result = await cluster.query(query);
-    const punches = result.rows.map(row => ({
-      id: row.id,
-      time: row.time,
-      createdAt: row.createdAt,
-    }));
-    res.send(punches);
-  } catch (err) {
-    console.error("❌ Query failed:", err);
-    res.status(500).send({ error: "Failed to fetch punches" });
-  }
-});
+  // Fetch punches
+  app.get("/api/punches", async (req, res) => {
+    try {
+      const query = `
+        SELECT META().id, time, createdAt
+        FROM \`${process.env.COUCHBASE_BUCKET}\`
+        WHERE META().id LIKE "punch_%"
+        ORDER BY createdAt DESC
+        LIMIT 50;
+      `;
+      const result = await cluster.query(query);
+      const punches = result.rows.map(row => ({
+        id: row.id,
+        time: row.time,
+        createdAt: row.createdAt,
+      }));
+      res.send(punches);
+    } catch (err) {
+      console.error("❌ Query failed:", err);
+      res.status(500).send({ error: "Failed to fetch punches" });
+    }
+  });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server started on port ${PORT}`);
-});
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`🚀 Server started on port ${PORT}`);
+  });
+};
+
+// Start everything
+startServer();
