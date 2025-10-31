@@ -22,8 +22,9 @@ const connectToCouchbase = async () => {
   collection = bucket.defaultCollection();
 };
 
-app.get("/api/punches", async (req, res) => {
-  res.send([]); // temporary test
+
+app.get("*", (req, res) => {
+  res.send(`Route not found: ${req.url}`);
 });
 
 app.post("/api/punch", async (req, res) => {
