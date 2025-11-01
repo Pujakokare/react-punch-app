@@ -23,11 +23,11 @@ app.post("/api/punch", (req, res) => {
 
   const newPunch = {
     time,
-    message,
-    createdAt: new Date().toISOString(),
+    message: message || "-",
+    recordedAt: new Date().toISOString(),
   };
   
-  punches.push({ time, message });
+  punches.push( newPunch );
   res.status(201).json({ success: true });
 });
 
