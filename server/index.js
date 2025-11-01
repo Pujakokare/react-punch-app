@@ -13,9 +13,21 @@ app.use(express.static(path.join(__dirname, "../client/build")));
 let punches = [];
 
 // API endpoints
-app.get("/api/punches", (req, res) => {
-  res.json(punches);
+app.get("/api/punches", async (req, res) => {
+  try {
+    const result = await cluster.query("SELECT META().id, * FROM `punches`");
+    const punches = result.rows.map(r => r.punches);
+    res.json(punches);
+  } catch (error) {
+    console.error("Error fetching punches:", error);
+    res.status(500).json([]);
+  }
 });
+
+
+// app.get("/api/punches", (req, res) => {
+//   res.json(punches);
+// });
 
 app.post("/api/punch", async (req, res) => {
   const { note, time } = req.body;
