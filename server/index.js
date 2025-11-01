@@ -1,24 +1,26 @@
-import express from "express";
-import cors from "cors";
-import bodyParser from "body-parser";
-import { connect, cluster } from "couchbase";
-
-// Environment variables
-const COUCHBASE_CONNSTR = process.env.COUCHBASE_CONNSTR || "couchbase://localhost";
-const COUCHBASE_USER = process.env.COUCHBASE_USER || "Administrator";
-const COUCHBASE_PASS = process.env.COUCHBASE_PASS || "password";
-const COUCHBASE_BUCKET = process.env.COUCHBASE_BUCKET || "punches";
+// server/index.js
+const express = require("express");
+const cors = require("cors");
+const bodyParser = require("body-parser");
+const couchbase = require("couchbase");
+require("dotenv").config();
 
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-// ✅ Initialize Couchbase
+// ✅ Environment variables
+const COUCHBASE_CONNSTR = process.env.COUCHBASE_CONNSTR || "couchbase://localhost";
+const COUCHBASE_USER = process.env.COUCHBASE_USER || "Administrator";
+const COUCHBASE_PASS = process.env.COUCHBASE_PASS || "password";
+const COUCHBASE_BUCKET = process.env.COUCHBASE_BUCKET || "punches";
+
+// ✅ Initialize Couchbase connection
 let clusterConn, bucket, collection;
 
 async function initCouchbase() {
   try {
-    clusterConn = await connect(COUCHBASE_CONNSTR, {
+    clusterConn = await couchbase.connect(COUCHBASE_CONNSTR, {
       username: COUCHBASE_USER,
       password: COUCHBASE_PASS,
     });
@@ -31,23 +33,31 @@ async function initCouchbase() {
   }
 }
 
-await initCouchbase();
+// Initialize Couchbase before handling requests
+initCouchbase();
 
 // ✅ POST /api/punch — Save a punch
 app.post("/api/punch", async (req, res) => {
-  const { note, time } = req.body;
-
-  if (!time) {
-    return res.status(400).json({ success: false, error: "Missing time" });
-  }
-
-  const id = `punch_${Date.now()}`;
-  const recordedAt = new Date().toISOString();
-
   try {
-    const punchData = { time, note, recordedAt };
+    const { note, time } = req.body;
+
+    if (!time) {
+      return res.status(400).json({ success: false, error: "Missing time" });
+    }
+
+    const id = `punch_${Date.now()}`;
+    const recordedAt = new Date().toLocaleString("en-IN", {
+      timeZone: "Asia/Kolkata",
+    });
+
+    const punchData = {
+      punchTime: time,
+      note: note || "—",
+      recordedAt, // ✅ Save recorded time
+    };
+
     await collection.upsert(id, punchData);
-    res.json({ success: true, recordedAt });
+    res.json({ success: true, punch: punchData });
   } catch (err) {
     console.error("❌ Error saving punch:", err);
     res.status(500).json({ success: false, error: "Failed to save punch" });
@@ -57,7 +67,12 @@ app.post("/api/punch", async (req, res) => {
 // ✅ GET /api/punches — Fetch all punches
 app.get("/api/punches", async (req, res) => {
   try {
-    const query = `SELECT p.* FROM \`${COUCHBASE_BUCKET}\` p ORDER BY META().id DESC LIMIT 50;`;
+    const query = `
+      SELECT META().id, p.punchTime, p.note, p.recordedAt
+      FROM \`${COUCHBASE_BUCKET}\` p
+      ORDER BY META().id DESC
+      LIMIT 50;
+    `;
     const result = await clusterConn.query(query);
     const punches = result.rows;
     res.json(punches);
@@ -67,8 +82,8 @@ app.get("/api/punches", async (req, res) => {
   }
 });
 
-// ✅ Start server
-const PORT = process.env.PORT || 30000;
+// ✅ Start the server
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Server started on port ${PORT}`);
 });
