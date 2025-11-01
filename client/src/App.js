@@ -1,23 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./App.css";
 
-const API_BASE = process.env.REACT_APP_API_BASE || "";
-
-function useLocalTime() {
-  try {
-    const d = new Date();
-    if (isNaN(d.getTime())) return null;
-    return d.toISOString();
-  } catch {
-    return null;
-  }
-}
-
-function isoFromInput(value) {
-  if (!value) return null;
-  const dt = new Date(value);
-  return dt.toISOString();
-}
+const API_BASE = process.env.REACT_APP_BACKEND_URL;
 
 export default function App() {
   const [punches, setPunches] = useState([]);
@@ -25,13 +9,14 @@ export default function App() {
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
   const [greeting, setGreeting] = useState("");
-  const localIso = useLocalTime();
-  const [useLocal, setUseLocal] = useState(!!localIso);
+  const [useLocal, setUseLocal] = useState(true);
+
+  const localIso = new Date().toISOString();
 
   async function fetchPunches() {
     setLoading(true);
     try {
-      const r = await fetch(API_BASE + "/api/punches");
+      const r = await fetch(API_BASE + "/api/punch");
       const data = await r.json();
       setPunches(data);
     } catch (e) {
@@ -55,7 +40,7 @@ export default function App() {
   async function submitPunch() {
     let timeIso = null;
     if (useLocal && localIso) timeIso = localIso;
-    else timeIso = isoFromInput(manualInput);
+    else timeIso = manualInput;
 
     if (!timeIso) {
       alert("Please provide a valid time (local or manual).");
@@ -79,7 +64,6 @@ export default function App() {
       setManualInput("");
       await fetchPunches();
 
-      // ✅ Show greeting message
       const msg = getGreeting();
       setGreeting(msg);
       setTimeout(() => setGreeting(""), 4000);
@@ -91,7 +75,7 @@ export default function App() {
 
   return (
     <div className="app-container">
-      <h1>⏰ Punch In Application </h1>
+      <h1>⏰ Punch In Application</h1>
 
       {greeting && <div className="greeting">{greeting}</div>}
 
@@ -155,32 +139,16 @@ export default function App() {
                 <th>Recorded At</th>
               </tr>
             </thead>
-              <tbody>
-               {punches.map((p, i) => (
-                 <tr key={i}> 
-                 <td>{i + 1}</td>
-                 <td>{p.time}</td>
-                 <td>{p.message || "—"}</td>
-                 <td>{p.recordedAt || "—"}</td>  {/* ✅ show recorded time */}
+            <tbody>
+              {punches.map((p, i) => (
+                <tr key={i}>
+                  <td>{i + 1}</td>
+                  <td>{new Date(p.time).toLocaleString()}</td>
+                  <td>{p.note || "—"}</td>
+                  <td>{p.recordedAt ? new Date(p.recordedAt).toLocaleString() : "—"}</td>
                 </tr>
-               ))}
+              ))}
             </tbody>
-
-            // <tbody>
-            //   {punches.map((p, i) => (
-            //     <tr key={i}>
-            //       <td>{i + 1}</td>
-                 
-            //       <td>{new Date(p.time).toLocaleString()}</td>
-            //       <td>{p.note || "—"}</td>
-            //       <td>
-            //         {p.createdAt
-            //           ? new Date(p.recordededAt).toLocaleString()
-            //           : "—"}
-            //       </td>
-            //     </tr>
-            //   ))}
-            // </tbody>
           </table>
         )}
       </div>
@@ -193,6 +161,13 @@ export default function App() {
     </div>
   );
 }
+
+
+
+
+
+
+
 
 
 
