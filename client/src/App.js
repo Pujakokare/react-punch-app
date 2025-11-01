@@ -1,7 +1,23 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import "./App.css";
 
-const API_BASE = process.env.REACT_APP_BACKEND_URL;
+const API_BASE = process.env.REACT_APP_API_BASE || "";
+
+function useLocalTime() {
+  try {
+    const d = new Date();
+    if (isNaN(d.getTime())) return null;
+    return d.toISOString();
+  } catch {
+    return null;
+  }
+}
+
+function isoFromInput(value) {
+  if (!value) return null;
+  const dt = new Date(value);
+  return dt.toISOString();
+}
 
 export default function App() {
   const [punches, setPunches] = useState([]);
@@ -9,14 +25,13 @@ export default function App() {
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
   const [greeting, setGreeting] = useState("");
-  const [useLocal, setUseLocal] = useState(true);
-
-  const localIso = new Date().toISOString();
+  const localIso = useLocalTime();
+  const [useLocal, setUseLocal] = useState(!!localIso);
 
   async function fetchPunches() {
     setLoading(true);
     try {
-      const r = await fetch(API_BASE + "/api/punch");
+      const r = await fetch(API_BASE + "/api/punches");
       const data = await r.json();
       setPunches(data);
     } catch (e) {
@@ -40,7 +55,7 @@ export default function App() {
   async function submitPunch() {
     let timeIso = null;
     if (useLocal && localIso) timeIso = localIso;
-    else timeIso = manualInput;
+    else timeIso = isoFromInput(manualInput);
 
     if (!timeIso) {
       alert("Please provide a valid time (local or manual).");
@@ -64,6 +79,7 @@ export default function App() {
       setManualInput("");
       await fetchPunches();
 
+      // ✅ Show greeting message
       const msg = getGreeting();
       setGreeting(msg);
       setTimeout(() => setGreeting(""), 4000);
@@ -75,77 +91,25 @@ export default function App() {
 
   return (
     <div className="app-container">
-      <h1>⏰ Punch In Application</h1>
+      <h1>⏰ Punch In</h1>
+      <h1>⏰ Punch In Application </h1>
 
       {greeting && <div className="greeting">{greeting}</div>}
 
-      <div className="punch-card">
-        <div className="row">
-          <label>
-            <input
-              type="checkbox"
-              checked={useLocal}
-              onChange={() => setUseLocal((v) => !v)}
-            />
-            Use local time (
-            {localIso ? new Date(localIso).toLocaleString() : "not available"})
-          </label>
-        </div>
-
-        {!useLocal && (
-          <div className="row">
-            <label>
-              Manual time:
-              <input
-                type="datetime-local"
-                value={manualInput}
-                onChange={(e) => setManualInput(e.target.value)}
-              />
-            </label>
-          </div>
-        )}
-
-        <div className="row">
-          <label>
-            Note (optional):
-            <input
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder="e.g., start shift"
-            />
-          </label>
-        </div>
-
-        <div className="row buttons">
-          <button onClick={submitPunch}>Punch In</button>
-          <button onClick={fetchPunches}>Refresh</button>
-        </div>
-      </div>
-
-      <h2>🗓️ Recent Punches</h2>
-
-      <div className="table-container">
-        {loading ? (
-          <div>Loading...</div>
-        ) : punches.length === 0 ? (
-          <div>No punches yet.</div>
-        ) : (
-          <table>
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Punch Time</th>
-                <th>Note</th>
-                <th>Recorded At</th>
-              </tr>
-            </thead>
-            <tbody>
+@@ -159,55 +159,59 @@
               {punches.map((p, i) => (
                 <tr key={i}>
                   <td>{i + 1}</td>
                   <td>{new Date(p.time).toLocaleString()}</td>
                   <td>{p.note || "—"}</td>
-                  <td>{p.recordedAt ? new Date(p.recordedAt).toLocaleString() : "—"}</td>
+                  <td>
+                  <td>{new Date(p.time).toLocaleString()}</td>
+                  <td>{p.note || "—"}</td>
+                  <td>
+                    {p.createdAt
+                      ? new Date(p.createdAt).toLocaleString()
+                      : "—"}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -161,8 +125,6 @@ export default function App() {
     </div>
   );
 }
-
-
 
 
 
