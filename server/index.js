@@ -21,13 +21,13 @@ app.post("/api/punch", (req, res) => {
   const { time, message } = req.body;
   if (!time) return res.status(400).json({ error: "Time required" });
 
-  const newPunch = {
+  const Punch = {
     time,
-    message: message || "-",
-    createdAt: new Date().toLocalString(),
+    note,
+    createdAt: new Date().toISOString(),
   };
   
-  punches.push( newPunch );
+  punches.push( Punch );
   res.status(201).json({ success: true });
 });
 
