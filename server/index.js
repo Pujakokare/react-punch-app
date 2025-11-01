@@ -18,20 +18,16 @@ app.get("/api/punches", (req, res) => {
 });
 
 app.post("/api/punch", (req, res) => {
-  const { time, message } = req.body;
+  try{
+    const { time, note } = req.body;
   if (!time) return res.status(400).json({ error: "Time required" });
-
-  const Punch = {
-    time,
-    note,
-    createdAt: new Date().toISOString(),
-  };
-  
-  punches.push( Punch );
+  punches.push({ time, note, createdAt: new Date().toISOString() });
   res.status(201).json({ success: true });
+  } catch (err){
+  console.error("POST /api/punch error:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 });
-
-
 
 // Important for Render: use process.env.PORT
 const PORT = process.env.PORT || 3000;
