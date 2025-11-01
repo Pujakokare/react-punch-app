@@ -17,15 +17,19 @@ app.get("/api/punches", (req, res) => {
   res.json(punches);
 });
 
-app.post("/api/punch", (req, res) => {
-  try{
-    const { time, note } = req.body;
-  if (!time) return res.status(400).json({ error: "Time required" });
-  punches.push({ time, note, createdAt: new Date().toISOString() });
-  res.status(201).json({ success: true });
-  } catch (err){
-  console.error("POST /api/punch error:", err);
-    res.status(500).json({ error: "Internal Server Error" });
+app.post("/api/punch", async (req, res) => {
+  const { note, time } = req.body;
+  const id = `punch_${Date.now()}`;
+
+  try {
+    const recordedAt = new Date().toLocaleString(); // capture server time
+    const punchData = { time, note, recordedAt };
+
+    await collection.upsert(id, punchData);
+    res.json({ success: true, recordedAt });
+  } catch (error) {
+    console.error("❌ Error saving punch:", error);
+    res.status(500).json({ success: false, message: "Failed to punch in" });
   }
 });
 
