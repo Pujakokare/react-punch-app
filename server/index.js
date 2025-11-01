@@ -24,7 +24,7 @@ app.post("/api/punch", (req, res) => {
   const newPunch = {
     time,
     message: message || "-",
-    recordedAt: new Date().toLocalString(),
+    createdAt: new Date().toLocalString(),
   };
   
   punches.push( newPunch );
