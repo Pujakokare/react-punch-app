@@ -155,24 +155,32 @@ export default function App() {
                 <th>Recorded At</th>
               </tr>
             </thead>
-            <tbody>
-              {punches.map((p, i) => (
-                <tr key={i}>
-                  <td>{i + 1}</td>
-                  // <td>{p.time}</td>
-                  // <td>{p.message || "—"}</td>
-                  // <td>{p.recordedAt || "—"}</td>  {/* ✅ show recorded time */}
-                
-                  <td>{new Date(p.time).toLocaleString()}</td>
-                  <td>{p.note || "—"}</td>
-                  <td>
-                    {p.createdAt
-                      ? new Date(p.recordededAt).toLocaleString()
-                      : "—"}
-                  </td>
+              <tbody>
+               {punches.map((p, i) => (
+                 <tr key={i}> 
+                 <td>{i + 1}</td>
+                 <td>{p.time}</td>
+                 <td>{p.message || "—"}</td>
+                 <td>{p.recordedAt || "—"}</td>  {/* ✅ show recorded time */}
                 </tr>
-              ))}
+               ))}
             </tbody>
+
+            // <tbody>
+            //   {punches.map((p, i) => (
+            //     <tr key={i}>
+            //       <td>{i + 1}</td>
+                 
+            //       <td>{new Date(p.time).toLocaleString()}</td>
+            //       <td>{p.note || "—"}</td>
+            //       <td>
+            //         {p.createdAt
+            //           ? new Date(p.recordededAt).toLocaleString()
+            //           : "—"}
+            //       </td>
+            //     </tr>
+            //   ))}
+            // </tbody>
           </table>
         )}
       </div>
