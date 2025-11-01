@@ -91,7 +91,7 @@ export default function App() {
 
   return (
     <div className="app-container">
-      <h1>⏰ Punch In</h1>
+      <h1>⏰ Punch In Application </h1>
 
       {greeting && <div className="greeting">{greeting}</div>}
 
@@ -159,13 +159,17 @@ export default function App() {
               {punches.map((p, i) => (
                 <tr key={i}>
                   <td>{i + 1}</td>
-                  <td>{new Date(p.time).toLocaleString()}</td>
-                  <td>{p.note || "—"}</td>
-                  <td>
-                    {p.createdAt
-                      ? new Date(p.createdAt).toLocaleString()
-                      : "—"}
-                  </td>
+                  <td>{p.time}</td>
+                  <td>{p.message || "—"}</td>
+                  <td>{p.recordedAt || "—"}</td>  {/* ✅ show recorded time */}
+                
+                  // <td>{new Date(p.time).toLocaleString()}</td>
+                  // <td>{p.note || "—"}</td>
+                  // <td>
+                  //   {p.createdAt
+                  //     ? new Date(p.createdAt).toLocaleString()
+                  //     : "—"}
+                  // </td>
                 </tr>
               ))}
             </tbody>
