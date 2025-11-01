@@ -79,7 +79,6 @@ export default function App() {
       setManualInput("");
       await fetchPunches();
 
-      // ✅ Show greeting message
       const msg = getGreeting();
       setGreeting(msg);
       setTimeout(() => setGreeting(""), 4000);
@@ -91,23 +90,79 @@ export default function App() {
 
   return (
     <div className="app-container">
-      <h1>⏰ Punch In</h1>
-      <h1>⏰ Punch In Application </h1>
+      <h1>⏰ Punch In Application</h1>
 
       {greeting && <div className="greeting">{greeting}</div>}
 
-@@ -159,55 +159,59 @@
+      <div className="punch-card">
+        <div className="row">
+          <label>
+            <input
+              type="checkbox"
+              checked={useLocal}
+              onChange={() => setUseLocal((v) => !v)}
+            />
+            Use local time (
+            {localIso ? new Date(localIso).toLocaleString() : "not available"})
+          </label>
+        </div>
+
+        {!useLocal && (
+          <div className="row">
+            <label>
+              Manual time:
+              <input
+                type="datetime-local"
+                value={manualInput}
+                onChange={(e) => setManualInput(e.target.value)}
+              />
+            </label>
+          </div>
+        )}
+
+        <div className="row">
+          <label>
+            Note (optional):
+            <input
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="e.g., start shift"
+            />
+          </label>
+        </div>
+
+        <div className="row buttons">
+          <button onClick={submitPunch}>Punch In</button>
+          <button onClick={fetchPunches}>Refresh</button>
+        </div>
+      </div>
+
+      <h2>🗓️ Recent Punches</h2>
+
+      <div className="table-container">
+        {loading ? (
+          <div>Loading...</div>
+        ) : punches.length === 0 ? (
+          <div>No punches yet.</div>
+        ) : (
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Punch Time</th>
+                <th>Note</th>
+                <th>Recorded At</th>
+              </tr>
+            </thead>
+            <tbody>
               {punches.map((p, i) => (
                 <tr key={i}>
                   <td>{i + 1}</td>
                   <td>{new Date(p.time).toLocaleString()}</td>
                   <td>{p.note || "—"}</td>
                   <td>
-                  <td>{new Date(p.time).toLocaleString()}</td>
-                  <td>{p.note || "—"}</td>
-                  <td>
-                    {p.createdAt
-                      ? new Date(p.createdAt).toLocaleString()
+                    {p.recordedAt
+                      ? new Date(p.recordedAt).toLocaleString()
                       : "—"}
                   </td>
                 </tr>
