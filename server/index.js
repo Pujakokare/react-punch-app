@@ -9,6 +9,7 @@ const COUCHBASE_USER = process.env.COUCHBASE_USER || "Administrator";
 const COUCHBASE_PASS = process.env.COUCHBASE_PASS || "password";
 const COUCHBASE_BUCKET = process.env.COUCHBASE_BUCKET || "punches";
 
+
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
