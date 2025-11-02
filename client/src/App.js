@@ -3,7 +3,6 @@ import "./App.css";
 
 const API_BASE = process.env.REACT_APP_API_BASE || "";
 
-// 🔹 Utility hook to get local ISO time safely
 function useLocalTime() {
   try {
     const d = new Date();
@@ -14,7 +13,6 @@ function useLocalTime() {
   }
 }
 
-// 🔹 Convert manual datetime-local input to ISO string
 function isoFromInput(value) {
   if (!value) return null;
   const dt = new Date(value);
@@ -30,17 +28,14 @@ export default function App() {
   const localIso = useLocalTime();
   const [useLocal, setUseLocal] = useState(!!localIso);
 
-  // 🔹 Fetch all punches from backend
   async function fetchPunches() {
     setLoading(true);
     try {
-      const res = await fetch(API_BASE + "/api/punches");
-      if (!res.ok) throw new Error("Failed to fetch punches");
-      const data = await res.json();
-      setPunches(data || []);
+      const r = await fetch(API_BASE + "/api/punches");
+      const data = await r.json();
+      setPunches(data);
     } catch (e) {
-      console.error("❌ Failed to fetch punches:", e);
-      alert("Failed to fetch punches");
+      console.error("Failed to fetch punches", e);
     } finally {
       setLoading(false);
     }
@@ -50,7 +45,6 @@ export default function App() {
     fetchPunches();
   }, []);
 
-  // 🔹 Show greeting message based on current hour
   function getGreeting() {
     const hour = new Date().getHours();
     if (hour < 12) return "🌞 Good morning! Have a productive day ahead.";
@@ -58,7 +52,6 @@ export default function App() {
     return "🌙 Good evening! Great job finishing strong today.";
   }
 
-  // 🔹 Submit a new punch
   async function submitPunch() {
     let timeIso = null;
     if (useLocal && localIso) timeIso = localIso;
@@ -77,20 +70,20 @@ export default function App() {
       });
 
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
+        const err = await res.json();
         alert("Failed to save: " + (err.error || res.statusText));
         return;
       }
 
-      const msg = getGreeting();
-      setGreeting(msg);
-      setTimeout(() => setGreeting(""), 4000);
-
       setNote("");
       setManualInput("");
       await fetchPunches();
+
+      const msg = getGreeting();
+      setGreeting(msg);
+      setTimeout(() => setGreeting(""), 4000);
     } catch (e) {
-      console.error("❌ Save failed:", e);
+      console.error("Save failed", e);
       alert("Save failed");
     }
   }
@@ -139,9 +132,7 @@ export default function App() {
         </div>
 
         <div className="row buttons">
-          <button onClick={submitPunch} disabled={loading}>
-            {loading ? "Saving..." : "Punch In"}
-          </button>
+          <button onClick={submitPunch}>Punch In</button>
           <button onClick={fetchPunches}>Refresh</button>
         </div>
       </div>
@@ -167,9 +158,7 @@ export default function App() {
               {punches.map((p, i) => (
                 <tr key={i}>
                   <td>{i + 1}</td>
-                  <td>
-                    {p.time ? new Date(p.time).toLocaleString() : "—"}
-                  </td>
+                  <td>{new Date(p.time).toLocaleString()}</td>
                   <td>{p.note || "—"}</td>
                   <td>
                     {p.recordedAt
@@ -191,6 +180,218 @@ export default function App() {
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// import React, { useEffect, useState } from "react";
+// import "./App.css";
+
+// const API_BASE = process.env.REACT_APP_API_BASE || "";
+
+// // 🔹 Utility hook to get local ISO time safely
+// function useLocalTime() {
+//   try {
+//     const d = new Date();
+//     if (isNaN(d.getTime())) return null;
+//     return d.toISOString();
+//   } catch {
+//     return null;
+//   }
+// }
+
+// // 🔹 Convert manual datetime-local input to ISO string
+// function isoFromInput(value) {
+//   if (!value) return null;
+//   const dt = new Date(value);
+//   return dt.toISOString();
+// }
+
+// export default function App() {
+//   const [punches, setPunches] = useState([]);
+//   const [manualInput, setManualInput] = useState("");
+//   const [note, setNote] = useState("");
+//   const [loading, setLoading] = useState(false);
+//   const [greeting, setGreeting] = useState("");
+//   const localIso = useLocalTime();
+//   const [useLocal, setUseLocal] = useState(!!localIso);
+
+//   // 🔹 Fetch all punches from backend
+//   async function fetchPunches() {
+//     setLoading(true);
+//     try {
+//       const res = await fetch(API_BASE + "/api/punches");
+//       if (!res.ok) throw new Error("Failed to fetch punches");
+//       const data = await res.json();
+//       setPunches(data || []);
+//     } catch (e) {
+//       console.error("❌ Failed to fetch punches:", e);
+//       alert("Failed to fetch punches");
+//     } finally {
+//       setLoading(false);
+//     }
+//   }
+
+//   useEffect(() => {
+//     fetchPunches();
+//   }, []);
+
+//   // 🔹 Show greeting message based on current hour
+//   function getGreeting() {
+//     const hour = new Date().getHours();
+//     if (hour < 12) return "🌞 Good morning! Have a productive day ahead.";
+//     if (hour < 17) return "🌤️ Good afternoon! Keep up the great work.";
+//     return "🌙 Good evening! Great job finishing strong today.";
+//   }
+
+//   // 🔹 Submit a new punch
+//   async function submitPunch() {
+//     let timeIso = null;
+//     if (useLocal && localIso) timeIso = localIso;
+//     else timeIso = isoFromInput(manualInput);
+
+//     if (!timeIso) {
+//       alert("Please provide a valid time (local or manual).");
+//       return;
+//     }
+
+//     try {
+//       const res = await fetch(API_BASE + "/api/punch", {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify({ time: timeIso, note }),
+//       });
+
+//       if (!res.ok) {
+//         const err = await res.json().catch(() => ({}));
+//         alert("Failed to save: " + (err.error || res.statusText));
+//         return;
+//       }
+
+//       const msg = getGreeting();
+//       setGreeting(msg);
+//       setTimeout(() => setGreeting(""), 4000);
+
+//       setNote("");
+//       setManualInput("");
+//       await fetchPunches();
+//     } catch (e) {
+//       console.error("❌ Save failed:", e);
+//       alert("Save failed");
+//     }
+//   }
+
+//   return (
+//     <div className="app-container">
+//       <h1>⏰ Punch In Application</h1>
+
+//       {greeting && <div className="greeting">{greeting}</div>}
+
+//       <div className="punch-card">
+//         <div className="row">
+//           <label>
+//             <input
+//               type="checkbox"
+//               checked={useLocal}
+//               onChange={() => setUseLocal((v) => !v)}
+//             />
+//             Use local time (
+//             {localIso ? new Date(localIso).toLocaleString() : "not available"})
+//           </label>
+//         </div>
+
+//         {!useLocal && (
+//           <div className="row">
+//             <label>
+//               Manual time:
+//               <input
+//                 type="datetime-local"
+//                 value={manualInput}
+//                 onChange={(e) => setManualInput(e.target.value)}
+//               />
+//             </label>
+//           </div>
+//         )}
+
+//         <div className="row">
+//           <label>
+//             Note (optional):
+//             <input
+//               value={note}
+//               onChange={(e) => setNote(e.target.value)}
+//               placeholder="e.g., start shift"
+//             />
+//           </label>
+//         </div>
+
+//         <div className="row buttons">
+//           <button onClick={submitPunch} disabled={loading}>
+//             {loading ? "Saving..." : "Punch In"}
+//           </button>
+//           <button onClick={fetchPunches}>Refresh</button>
+//         </div>
+//       </div>
+
+//       <h2>🗓️ Recent Punches</h2>
+
+//       <div className="table-container">
+//         {loading ? (
+//           <div>Loading...</div>
+//         ) : punches.length === 0 ? (
+//           <div>No punches yet.</div>
+//         ) : (
+//           <table>
+//             <thead>
+//               <tr>
+//                 <th>#</th>
+//                 <th>Punch Time</th>
+//                 <th>Note</th>
+//                 <th>Recorded At</th>
+//               </tr>
+//             </thead>
+//             <tbody>
+//               {punches.map((p, i) => (
+//                 <tr key={i}>
+//                   <td>{i + 1}</td>
+//                   <td>
+//                     {p.time ? new Date(p.time).toLocaleString() : "—"}
+//                   </td>
+//                   <td>{p.note || "—"}</td>
+//                   <td>
+//                     {p.recordedAt
+//                       ? new Date(p.recordedAt).toLocaleString()
+//                       : "—"}
+//                   </td>
+//                 </tr>
+//               ))}
+//             </tbody>
+//           </table>
+//         )}
+//       </div>
+
+//       <footer>
+//         <small>
+//           Times stored in UTC (ISO). Displayed in your local time zone.
+//         </small>
+//       </footer>
+//     </div>
+//   );
+// }
 
 
 
