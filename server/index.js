@@ -4,8 +4,8 @@ import bodyParser from "body-parser";
 import couchbase from "couchbase";
 
 const COUCHBASE_CONNSTR = process.env.COUCHBASE_CONNSTR;
-const COUCHBASE_USER = process.env.COUCHBASE_USER;
-const COUCHBASE_PASS = process.env.COUCHBASE_PASS;
+const COUCHBASE_USER = process.env.COUCHBASE_USERNAME;
+const COUCHBASE_PASS = process.env.COUCHBASE_PASSWORD;
 const COUCHBASE_BUCKET = process.env.COUCHBASE_BUCKET;
 
 const app = express();
