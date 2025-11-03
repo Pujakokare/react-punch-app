@@ -14,6 +14,7 @@ app.use(bodyParser.json());
 
 let clusterConn, bucket, collection;
 
+// ✅ Initialize Couchbase
 async function initCouchbase() {
   try {
     clusterConn = await couchbase.connect(COUCHBASE_CONNSTR, {
@@ -61,7 +62,7 @@ app.get("/api/punches", async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, "0.0.0.0", () => console.log(`🚀 Server started on port ${PORT}`));
-);
+
 
 
 // import express from "express";
