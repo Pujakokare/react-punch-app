@@ -3,52 +3,73 @@ import cors from "cors";
 import bodyParser from "body-parser";
 import couchbase from "couchbase";
 
-const COUCHBASE_CONNSTR = process.env.COUCHBASE_CONNSTR;
-const COUCHBASE_USER = process.env.COUCHBASE_USERNAME;
-const COUCHBASE_PASS = process.env.COUCHBASE_PASSWORD;
-const COUCHBASE_BUCKET = process.env.COUCHBASE_BUCKET;
-
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-let clusterConn, bucket, collection;
+// ✅ Environment variables from Render
+const {
+  COUCHBASE_CONNSTR,
+  COUCHBASE_USERNAME,
+  COUCHBASE_PASSWORD,
+  COUCHBASE_BUCKET,
+  PORT = 3000,
+} = process.env;
 
-// ✅ Initialize Couchbase
+// Global Couchbase variables
+let clusterConn;
+let bucket;
+let collection;
+
+// ✅ Initialize Couchbase connection
 async function initCouchbase() {
   try {
+    if (!COUCHBASE_CONNSTR || !COUCHBASE_USERNAME || !COUCHBASE_PASSWORD || !COUCHBASE_BUCKET) {
+      throw new Error("Missing one or more Couchbase environment variables");
+    }
+
     clusterConn = await couchbase.connect(COUCHBASE_CONNSTR, {
       username: COUCHBASE_USERNAME,
       password: COUCHBASE_PASSWORD,
     });
+
     bucket = clusterConn.bucket(COUCHBASE_BUCKET);
     collection = bucket.defaultCollection();
+
     console.log("✅ Couchbase connected successfully");
   } catch (err) {
     console.error("❌ Couchbase connection failed:", err);
+    process.exit(1); // Stop if connection fails
   }
 }
 
-await initCouchbase();
+// ✅ Express Routes
+app.get("/", (req, res) => {
+  res.send("🚀 Punch App Backend is running!");
+});
 
-// ✅ POST /api/punch — Save only punch time
+// Save punch time
 app.post("/api/punch", async (req, res) => {
   const { time } = req.body;
-  if (!time) return res.status(400).json({ success: false, error: "Missing time" });
+
+  if (!time) {
+    return res.status(400).json({ success: false, error: "Missing time" });
+  }
 
   const id = `punch_${Date.now()}`;
   const punchData = { time };
 
   try {
     await collection.upsert(id, punchData);
+    console.log("✅ Punch saved:", punchData);
     res.json({ success: true });
   } catch (err) {
     console.error("❌ Error saving punch:", err);
-    res.status(500).json({ success: false });
+    res.status(500).json({ success: false, error: "Failed to save punch" });
   }
 });
 
-// ✅ GET /api/punches — Fetch only punch time
+// Fetch punch times
 app.get("/api/punches", async (req, res) => {
   try {
     const query = `SELECT p.time FROM \`${COUCHBASE_BUCKET}\` p ORDER BY META().id DESC LIMIT 50;`;
@@ -56,12 +77,22 @@ app.get("/api/punches", async (req, res) => {
     res.json(result.rows);
   } catch (err) {
     console.error("❌ Error fetching punches:", err);
-    res.status(500).json({ success: false });
+    res.status(500).json({ success: false, error: "Failed to fetch punches" });
   }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, "0.0.0.0", () => console.log(`🚀 Server started on port ${PORT}`));
+// ✅ Start server only after Couchbase connects
+initCouchbase().then(() => {
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`🚀 Server started successfully on port ${PORT}`);
+  });
+});
+
+
+
+
+
+
 
 
 
