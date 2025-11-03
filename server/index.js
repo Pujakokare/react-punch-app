@@ -43,10 +43,10 @@ async function initCouchbase() {
   }
 }
 
-// ✅ Root route (for Render health checks)
-app.get("/", (req, res) => {
-  res.send("🚀 Punch App Backend is running!");
-});
+// // ✅ Root route (for Render health checks)
+// app.get("/", (req, res) => {
+//   res.send("🚀 Punch App Backend is running!");
+// });
 
 // ✅ POST /api/punch — Save punch time
 app.post("/api/punch", async (req, res) => {
