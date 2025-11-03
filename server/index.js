@@ -1,49 +1,77 @@
-const express = require("express");
-const cors = require("cors");
-const path = require("path");
+import express from "express";
+import cors from "cors";
+import bodyParser from "body-parser";
 import couchbase from "couchbase";
 
-const cluster = await couchbase.connect(process.env.COUCHBASE_HOST, {
-  username: process.env.COUCHBASE_USER,
-  password: process.env.COUCHBASE_PASSWORD,
-});
-
-const bucket = cluster.bucket(process.env.COUCHBASE_BUCKET);
-console.log("✅ Couchbase connected successfully");
-
+// Environment variables
+const COUCHBASE_CONNSTR = process.env.COUCHBASE_CONNSTR || "couchbase://localhost";
+const COUCHBASE_USER = process.env.COUCHBASE_USER || "Administrator";
+const COUCHBASE_PASS = process.env.COUCHBASE_PASS || "password";
+const COUCHBASE_BUCKET = process.env.COUCHBASE_BUCKET || "punches";
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(bodyParser.json());
 
-// Serve static frontend (React build)
-app.use(express.static(path.join(__dirname, "../client/build")));
+// ✅ Initialize Couchbase
+let clusterConn, bucket, collection;
 
-// Couchbase simulation or your DB code
-let punches = [];
+async function initCouchbase() {
+  try {
+    clusterConn = await couchbase.connect(COUCHBASE_CONNSTR, {
+      username: COUCHBASE_USER,
+      password: COUCHBASE_PASS,
+    });
 
-// API endpoints
-app.get("/api/punches", (req, res) => {
-  res.json(punches);
-});
+    bucket = clusterConn.bucket(COUCHBASE_BUCKET);
+    collection = bucket.defaultCollection();
 
-app.post("/api/punch", (req, res) => {
-  try{
-    const { time, note } = req.body;
-  if (!time) return res.status(400).json({ error: "Time required" });
-  punches.push({ time, note, createdAt: new Date().toISOString() });
-  res.status(201).json({ success: true });
-  } catch (err){
-  console.error("POST /api/punch error:", err);
-    res.status(500).json({ error: "Internal Server Error" });
+    console.log("✅ Couchbase connected successfully");
+  } catch (err) {
+    console.error("❌ Couchbase connection failed:", err);
+  }
+}
+
+await initCouchbase();
+
+// ✅ POST /api/punch — Save a punch
+app.post("/api/punch", async (req, res) => {
+  const { note, time } = req.body;
+
+  if (!time) {
+    return res.status(400).json({ success: false, error: "Missing time" });
+  }
+
+  const id = `punch_${Date.now()}`;
+  const recordedAt = new Date().toISOString();
+
+  try {
+    const punchData = { time, note, recordedAt };
+    await collection.upsert(id, punchData);
+    res.json({ success: true, recordedAt });
+  } catch (err) {
+    console.error("❌ Error saving punch:", err);
+    res.status(500).json({ success: false, error: "Failed to save punch" });
   }
 });
 
-// Important for Render: use process.env.PORT
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
+// ✅ GET /api/punches — Fetch all punches
+app.get("/api/punches", async (req, res) => {
+  try {
+    const query = `SELECT p.* FROM \`${COUCHBASE_BUCKET}\` p ORDER BY META().id DESC LIMIT 50;`;
+    const result = await clusterConn.query(query);
+    res.json(result.rows);
+  } catch (err) {
+    console.error("❌ Error fetching punches:", err);
+    res.status(500).json({ success: false, error: "Failed to fetch punches" });
+  }
+});
 
-
+// ✅ Start server
+const PORT = process.env.PORT || 30000;
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`🚀 Server started on port ${PORT}`);
+});
 
 
 // import express from "express";
