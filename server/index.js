@@ -43,10 +43,21 @@ async function initCouchbase() {
   }
 }
 
-// ✅ Express Routes
-app.get("/", (req, res) => {
-  res.send("🚀 Punch App Backend is running!");
+// // ✅ Express Routes
+// app.get("/", (req, res) => {
+//   res.send("🚀 Punch App Backend is running!");
+// });
+app.get("/api/punches", async (req, res) => {
+  try {
+    const query = `SELECT p.time FROM \`${COUCHBASE_BUCKET}\` p ORDER BY META().id DESC LIMIT 50;`;
+    const result = await clusterConn.query(query);
+    res.json(result.rows);
+  } catch (err) {
+    console.error("❌ Error fetching punches:", err);  // 👈 this logs the real Couchbase error
+    res.status(500).json({ success: false, error: err.message }); // 👈 show real message
+  }
 });
+
 
 // Save punch time
 app.post("/api/punch", async (req, res) => {
