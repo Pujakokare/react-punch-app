@@ -43,23 +43,12 @@ async function initCouchbase() {
   }
 }
 
-// // ✅ Express Routes
-// app.get("/", (req, res) => {
-//   res.send("🚀 Punch App Backend is running!");
-// });
-app.get("/api/punches", async (req, res) => {
-  try {
-    const query = `SELECT p.time FROM \`${COUCHBASE_BUCKET}\` p ORDER BY META().id DESC LIMIT 50;`;
-    const result = await clusterConn.query(query);
-    res.json(result.rows);
-  } catch (err) {
-    console.error("❌ Error fetching punches:", err);  // 👈 this logs the real Couchbase error
-    res.status(500).json({ success: false, error: err.message }); // 👈 show real message
-  }
+// ✅ Root route (for Render health checks)
+app.get("/", (req, res) => {
+  res.send("🚀 Punch App Backend is running!");
 });
 
-
-// Save punch time
+// ✅ POST /api/punch — Save punch time
 app.post("/api/punch", async (req, res) => {
   const { time } = req.body;
 
@@ -80,7 +69,7 @@ app.post("/api/punch", async (req, res) => {
   }
 });
 
-// Fetch punch times
+// ✅ GET /api/punches — Fetch punch times
 app.get("/api/punches", async (req, res) => {
   try {
     const query = `SELECT p.time FROM \`${COUCHBASE_BUCKET}\` p ORDER BY META().id DESC LIMIT 50;`;
@@ -88,7 +77,7 @@ app.get("/api/punches", async (req, res) => {
     res.json(result.rows);
   } catch (err) {
     console.error("❌ Error fetching punches:", err);
-    res.status(500).json({ success: false, error: "Failed to fetch punches" });
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
