@@ -18,8 +18,8 @@ let clusterConn, bucket, collection;
 async function initCouchbase() {
   try {
     clusterConn = await couchbase.connect(COUCHBASE_CONNSTR, {
-      username: COUCHBASE_USER,
-      password: COUCHBASE_PASS,
+      username: COUCHBASE_USERNAME,
+      password: COUCHBASE_PASSWORD,
     });
     bucket = clusterConn.bucket(COUCHBASE_BUCKET);
     collection = bucket.defaultCollection();
