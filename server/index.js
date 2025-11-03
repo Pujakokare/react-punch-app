@@ -44,9 +44,9 @@ async function initCouchbase() {
 }
 
 // ✅ Root route (for Render health checks)
-app.get("/", (req, res) => {
-  res.send("🚀 Punch App Backend is running!");
-});
+// app.get("/", (req, res) => {
+//   res.send("🚀 Punch App Backend is running!");
+// });
 
 // ✅ POST /api/punch — Save punch time
 app.post("/api/punch", async (req, res) => {
@@ -81,14 +81,14 @@ app.get("/api/punches", async (req, res) => {
   }
 });
 
+
+
 // ✅ Start server only after Couchbase connects
-initCouchbase().then(() => {
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`🚀 Server started successfully on port ${PORT}`);
-  });
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`🚀 Server started on port ${PORT}`);
 });
-
-
 
 
 
@@ -167,7 +167,7 @@ initCouchbase().then(() => {
 // });
 
 // // ✅ Start server
-// const PORT = process.env.PORT || 30000;
+// const PORT = process.env.PORT || 3000;
 // app.listen(PORT, "0.0.0.0", () => {
 //   console.log(`🚀 Server started on port ${PORT}`);
 // });
